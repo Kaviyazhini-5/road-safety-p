@@ -1,0 +1,52 @@
+import io
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import classification_report, confusion_matrix
+import matplotlib.pyplot as plt
+import seaborn as sns
+from IPython.display import display
+from google.colab import files # Import the files object from google.colab
+
+# Step 1: Upload and load the dataset
+# This assumes you are in a notebook environment like Google Colab or Kaggle
+# and need to upload the file
+uploaded = files.upload()  # This will prompt you to upload the file
+# Get the filename from the uploaded dictionary
+filename = list(uploaded.keys())[0]  
+df = pd.read_csv(io.BytesIO(uploaded[filename]))
+
+
+# Step 2: Preprocess the data
+df = df.dropna()  # Simple missing value handling
+X = df[['hour', 'day_of_week', 'weather_condition', 'speed', 'traffic_density']]  # Example features
+y = df['accident_occurred']  # Target variable: 0 (No), 1 (Yes)
+
+# Encode categorical variables if any
+X = pd.get_dummies(X, columns=['weather_condition', 'day_of_week'], drop_first=True)
+
+# Step 3: Train-test split
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Step 4: Model training
+model = RandomForestClassifier(n_estimators=100, random_state=42)
+model.fit(X_train, y_train)
+
+# Step 5: Evaluation
+y_pred = model.predict(X_test)
+print("Classification Report:\n", classification_report(y_test, y_pred))
+print("Confusion Matrix:\n", confusion_matrix(y_test, y_pred))
+
+# Step 6: Feature importance visualization
+importances = model.feature_importances_
+features = X.columns
+indices = np.argsort(importances)[::-1]
+
+plt.figure(figsize=(10, 6))
+sns.barplot(x=importances[indices], y=features[indices])
+plt.title('Feature Importances')
+plt.xlabel('Importance')
+plt.ylabel('Feature')
+plt.tight_layout()
+plt.show()
